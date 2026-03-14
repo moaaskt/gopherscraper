@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:Moa@123@localhost:5432/gopherscraper?schema=public"
+}
+
+model Produto {
+  id         Int     @id @default(autoincrement())
+  url        String
+  precoAlvo  Float
+  precoAtual String?
+  titulo     String? @default("Aguardando o Go buscar...")
+}
