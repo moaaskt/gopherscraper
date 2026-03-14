@@ -1,103 +1,56 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 function App() {
-  const [produtos, setProdutos] = useState([])
-  const [novaUrl, setNovaUrl] = useState('')
-  const [novoPrecoAlvo, setNovoPrecoAlvo] = useState('')
+  const [produtos, setProdutos] = useState([]);
+  const [url, setUrl] = useState('');
+  const [precoAlvo, setPrecoAlvo] = useState('');
 
-  // Função para buscar os dados na nossa API Node.js
+  // Busca produtos da API a cada 3 segundos para ver a atualização do Go em tempo real
   const carregarProdutos = async () => {
-    try {
-      const resposta = await fetch('http://localhost:3000/produtos')
-      const dados = await resposta.json()
-      setProdutos(dados)
-    } catch (error) {
-      console.error("Erro ao buscar produtos. O Node está rodando?", error)
-    }
-  }
+    const res = await axios.get('http://localhost:3000/produtos');
+    setProdutos(res.data);
+  };
 
-  // O useEffect garante que os produtos sejam carregados assim que a tela abrir
   useEffect(() => {
-    carregarProdutos()
-  }, [])
+    carregarProdutos();
+    const interval = setInterval(carregarProdutos, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Função para cadastrar uma nova URL
-  const adicionarProduto = async (e) => {
-    e.preventDefault()
-    
-    await fetch('http://localhost:3000/produtos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        url: novaUrl, 
-        precoAlvo: parseFloat(novoPrecoAlvo) 
-      })
-    })
-
-    // Limpa os campos do formulário e recarrega a tabela
-    setNovaUrl('')
-    setNovoPrecoAlvo('')
-    carregarProdutos()
-  }
+  const cadastrar = async (e) => {
+    e.preventDefault();
+    await axios.post('http://localhost:3000/produtos', { url, precoAlvo });
+    setUrl('');
+    setPrecoAlvo('');
+    carregarProdutos();
+  };
 
   return (
-    <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>🐹 GopherScraper - Rastreador de Preços</h1>
-      <p>Desenvolvido com React, Node.js e Golang!</p>
+    <div style={{ padding: '40px', fontFamily: 'sans-serif', backgroundColor: '#f4f4f9', minHeight: '100vh' }}>
+      <h1>🕵️‍♂️ Gopher Scraper - Dashboard</h1>
+      
+      <form onSubmit={cadastrar} style={{ marginBottom: '30px', background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+        <h3>Cadastrar Novo Produto</h3>
+        <input type="text" placeholder="URL do Produto" value={url} onChange={e => setUrl(e.target.value)} style={{ padding: '10px', width: '300px', marginRight: '10px' }} required />
+        <input type="number" placeholder="Preço Alvo" value={precoAlvo} onChange={e => setPrecoAlvo(e.target.value)} style={{ padding: '10px', width: '100px', marginRight: '10px' }} required />
+        <button type="submit" style={{ padding: '10px 20px', cursor: 'pointer', background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px' }}>Monitorar</button>
+      </form>
 
-      {/* Formulário para adicionar novos links */}
-      <div style={{ background: '#f4f4f4', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
-        <h3>Adicionar Novo Produto</h3>
-        <form onSubmit={adicionarProduto} style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            type="url" 
-            placeholder="Cole a URL aqui..." 
-            value={novaUrl} 
-            onChange={e => setNovaUrl(e.target.value)} 
-            required 
-            style={{ flex: 1, padding: '8px' }}
-          />
-          <input 
-            type="number" 
-            placeholder="Preço Alvo" 
-            value={novoPrecoAlvo} 
-            onChange={e => setNovoPrecoAlvo(e.target.value)} 
-            required 
-            style={{ width: '100px', padding: '8px' }}
-          />
-          <button type="submit" style={{ padding: '8px 16px', cursor: 'pointer', background: '#00add8', color: 'white', border: 'none', borderRadius: '4px' }}>
-            Rastrear
-          </button>
-        </form>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+        {produtos.map(p => (
+          <div key={p.id} style={{ background: '#fff', padding: '15px', borderRadius: '8px', borderLeft: '5px solid #007bff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+            <h4>{p.titulo || "Buscando informações..."}</h4>
+            <p style={{ fontSize: '12px', color: '#666', wordBreak: 'break-all' }}>{p.url}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Alvo: <b>R$ {p.precoAlvo}</b></span>
+              <span style={{ color: 'green', fontWeight: 'bold' }}>Atual: {p.precoAtual || "---"}</span>
+            </div>
+          </div>
+        ))}
       </div>
-
-      {/* Tabela de Produtos */}
-      <table border="1" cellPadding="12" style={{ borderCollapse: 'collapse', width: '100%', textAlign: 'left' }}>
-        <thead style={{ background: '#333', color: 'white' }}>
-          <tr>
-            <th>ID</th>
-            <th>Título do Produto</th>
-            <th>Preço Alvo</th>
-            <th>Preço Atual (Go)</th>
-            <th>Link</th>
-          </tr>
-        </thead>
-        <tbody>
-          {produtos.map(p => (
-            <tr key={p.id}>
-              <td>{p.id}</td>
-              <td><strong>{p.titulo}</strong></td>
-              <td>{p.precoAlvo}</td>
-              <td style={{ color: p.precoAtual ? 'green' : 'gray', fontWeight: 'bold' }}>
-                {p.precoAtual || 'Aguardando Go...'}
-              </td>
-              <td><a href={p.url} target="_blank" rel="noreferrer">Acessar</a></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
