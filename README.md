@@ -16,17 +16,3 @@ O projeto foi dividido em três serviços distintos, garantindo separação de r
 2.  **A API (Node.js)** atua como o cérebro da operação, gerenciando os dados em memória (futuramente em um Banco de Dados) e servindo de ponte entre o usuário e o robô de raspagem.
 3.  **O Worker (Golang)** é um script de alta performance executado sob demanda. Ele consulta a API Node.js para saber quais URLs precisa visitar, faz a raspagem (scraping) do HTML usando a biblioteca Colly e devolve os preços atualizados para a API.
 
-## 🛠️ Como rodar o projeto localmente
-
-Para rodar este projeto, você precisará abrir **três terminais** diferentes, um para cada serviço.
-
-### Pré-requisitos
-* [Node.js](https://nodejs.org/) instalado.
-* [Golang](https://go.dev/) instalado.
-
-### Passo a passo
-
-**1. Clone o repositório:**
-```bash
-git clone [https://github.com/SEU_USUARIO/gopherscraper.git](https://github.com/SEU_USUARIO/gopherscraper.git)
-cd gopherscraper
