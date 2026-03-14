@@ -1,10 +1,10 @@
-const express = require('express');
-const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
+const express = require("express");
+const cors = require("cors");
+const { PrismaClient } = require("@prisma/client");
 
 const app = express();
 
-// 🚀 Com o Prisma v6, inicializamos vazio! 
+// 🚀 Com o Prisma v6, inicializamos vazio!
 // Ele lê a URL do banco diretamente do schema.prisma
 const prisma = new PrismaClient();
 
@@ -60,9 +60,26 @@ app.post("/atualizar-preco", async (req, res) => {
   }
 });
 
+
+
+// Rota para deletar um produto do banco
+app.delete("/produtos/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.produto.delete({
+      where: { id: parseInt(id) },
+    });
+    console.log(`🗑️ Produto ${id} removido com sucesso!`);
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao deletar produto" });
+  }
+});
+
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(
-    `🧠 Cérebro Node.js a correr com PostgreSQL na porta http://localhost:${PORT}`
+    `🧠 Cérebro Node.js a correr com PostgreSQL na porta http://localhost:${PORT}`,
   );
 });
