@@ -1,0 +1,10 @@
+# Ignorar dependências do Node
+node_modules/
+
+# Ignorar builds do Go e do React
+dist/
+build/
+*.exe
+
+# Ignorar variáveis de ambiente (se for usar no futuro)
+.env
