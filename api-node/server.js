@@ -1,20 +1,25 @@
-const express = require("express");
-const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
+const express = require('express');
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 
+// 🚀 Com o Prisma v6, inicializamos vazio! 
+// Ele lê a URL do banco diretamente do schema.prisma
 const prisma = new PrismaClient();
 
-app.use(express.json());
+// Middlewares (CORS sempre vem antes para liberar o acesso do React)
 app.use(cors());
+app.use(express.json());
 
+// ROTA 1: Lista todos os produtos
 app.get("/produtos", async (req, res) => {
   console.log("📥 Alguém pediu a lista de produtos!");
   const produtos = await prisma.produto.findMany();
   res.json(produtos);
 });
 
+// ROTA 2: Cadastra um novo produto (Vem do React)
 app.post("/produtos", async (req, res) => {
   const { url, precoAlvo } = req.body;
 
@@ -34,6 +39,7 @@ app.post("/produtos", async (req, res) => {
   }
 });
 
+// ROTA 3: Atualiza o preço e título (Vem do Go Scraper)
 app.post("/atualizar-preco", async (req, res) => {
   const { id, precoAtual, titulo } = req.body;
 
@@ -57,6 +63,6 @@ app.post("/atualizar-preco", async (req, res) => {
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(
-    `🧠 Cérebro Node.js a correr com PostgreSQL na porta http://localhost:${PORT}`,
+    `🧠 Cérebro Node.js a correr com PostgreSQL na porta http://localhost:${PORT}`
   );
 });

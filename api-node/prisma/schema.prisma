@@ -2,9 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// O Prisma precisa disso aqui só para saber qual "idioma" falar!
 datasource db {
   provider = "postgresql"
+  url      = "postgresql://postgres:Moa@123@localhost:5432/gopherscraper?schema=public"
 }
 
 model Produto {
