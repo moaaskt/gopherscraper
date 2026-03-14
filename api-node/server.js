@@ -1,67 +1,62 @@
-const express = require('express');
-const cors = require('cors');
+const express = require("express");
+const cors = require("cors");
+const { PrismaClient } = require("@prisma/client");
 
 const app = express();
 
-// Middlewares: Ensinando o Node a entender JSON e permitindo acesso externo (CORS)
+const prisma = new PrismaClient();
+
 app.use(express.json());
 app.use(cors());
 
-// 📦 Nosso "Banco de Dados" em memória por enquanto
-let produtosRastreados = [
-    { 
-        id: 1, 
-        url: 'http://books.toscrape.com/', 
-        precoAlvo: 40.00, 
-        precoAtual: null, 
-        titulo: 'Aguardando o Go buscar...' 
-    }
-];
-
-// 🟢 ROTA 1: Lista os produtos (O Go vai chamar essa rota para saber onde deve ir)
-app.get('/produtos', (req, res) => {
-    console.log("📥 Alguém pediu a lista de produtos!");
-    res.json(produtosRastreados);
+app.get("/produtos", async (req, res) => {
+  console.log("📥 Alguém pediu a lista de produtos!");
+  const produtos = await prisma.produto.findMany();
+  res.json(produtos);
 });
 
-// 🟢 ROTA 2: O React vai usar essa rota para cadastrar um novo link para rastrear
-app.post('/produtos', (req, res) => {
-    const { url, precoAlvo } = req.body;
+app.post("/produtos", async (req, res) => {
+  const { url, precoAlvo } = req.body;
 
-    const novoProduto = {
-        id: produtosRastreados.length + 1,
+  try {
+    const novoProduto = await prisma.produto.create({
+      data: {
         url: url,
-        precoAlvo: precoAlvo,
-        precoAtual: null,
-        titulo: 'Aguardando o Go buscar...'
-    };
+        precoAlvo: parseFloat(precoAlvo),
+      },
+    });
 
-    produtosRastreados.push(novoProduto);
-    console.log("✅ Novo produto cadastrado:", url);
-    
-    // Retorna status 201 (Created)
+    console.log("✅ Novo produto registado na BD:", url);
     res.status(201).json(novoProduto);
+  } catch (error) {
+    console.error("Erro ao guardar na base de dados:", error);
+    res.status(500).json({ error: "Erro interno no servidor" });
+  }
 });
 
-// 🟢 ROTA 3: O Go vai usar essa rota para avisar o Node qual é o preço atualizado
-app.post('/atualizar-preco', (req, res) => {
-    const { id, precoAtual, titulo } = req.body;
+app.post("/atualizar-preco", async (req, res) => {
+  const { id, precoAtual, titulo } = req.body;
 
-    // Procura o produto no nosso array e atualiza
-    const produtoIndex = produtosRastreados.findIndex(p => p.id === id);
-    
-    if (produtoIndex !== -1) {
-        produtosRastreados[produtoIndex].precoAtual = precoAtual;
-        produtosRastreados[produtoIndex].titulo = titulo;
-        console.log(`🚀 PREÇO ATUALIZADO PELO GO: ${titulo} - ${precoAtual}`);
-        res.json({ message: "Atualizado com sucesso!" });
-    } else {
-        res.status(404).json({ error: "Produto não encontrado" });
-    }
+  try {
+    const produtoAtualizado = await prisma.produto.update({
+      where: { id: id },
+      data: {
+        precoAtual: precoAtual,
+        titulo: titulo,
+      },
+    });
+
+    console.log(`🚀 PREÇO ATUALIZADO NA BD: ${titulo} - ${precoAtual}`);
+    res.json({ message: "Atualizado com sucesso na BD!" });
+  } catch (error) {
+    console.error("Erro ao atualizar base de dados:", error);
+    res.status(404).json({ error: "Produto não encontrado ou erro na BD" });
+  }
 });
 
-// Subindo o servidor na porta 3000
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`🧠 Cérebro Node.js rodando na porta http://localhost:${PORT}`);
+  console.log(
+    `🧠 Cérebro Node.js a correr com PostgreSQL na porta http://localhost:${PORT}`,
+  );
 });

@@ -1,13 +1,16 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
+// O Prisma precisa disso aqui só para saber qual "idioma" falar!
 datasource db {
   provider = "postgresql"
+}
+
+model Produto {
+  id         Int     @id @default(autoincrement())
+  url        String
+  precoAlvo  Float
+  precoAtual String?
+  titulo     String? @default("Aguardando o Go buscar...")
 }
