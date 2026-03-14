@@ -1,7 +1,6 @@
 module scraper-go
 
 go 1.26.1
-<<<<<<< HEAD
 
 require github.com/gocolly/colly/v2 v2.3.0
 
@@ -24,5 +23,3 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
-=======
->>>>>>> b739cb853edbb39a9ffd5719b3bf3d9d4577d3a3
