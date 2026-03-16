@@ -5,54 +5,61 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/gocolly/colly/v2"
 )
 
-
 type Produto struct {
-	ID        int     `json:"id"`
-	URL       string  `json:"url"`
-	PrecoAlvo float64 `json:"precoAlvo"`
+	ID   int    `json:"id"`
+	URL  string `json:"url"`
 }
 
 func main() {
-	fmt.Println("🚀 Scraper Go iniciado e aguardando ordens do Node.js...")
+	fmt.Println("🚀 [GO] Scraper REAL iniciado! Buscando preços na web...")
 
 	for {
-		
-		resp, err := http.Get("http://localhost:3000/produtos")
-		if err != nil {
-			fmt.Println("❌ Erro ao conectar na API Node:", err)
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
+		// 1. Pede a lista para o Node
+		resp, _ := http.Get("http://localhost:3000/produtos")
 		var produtos []Produto
 		json.NewDecoder(resp.Body).Decode(&produtos)
 		resp.Body.Close()
 
-		
 		for _, p := range produtos {
-			fmt.Printf("🔍 Verificando: %s\n", p.URL)
-			
-			
-			precoSimulado := "R$ 1.450,00"
-			tituloSimulado := "Produto Teste Automatizado"
+			fmt.Printf("🔍 [GO] Acessando site: %s\n", p.URL)
 
-			
-			atualizacao := map[string]interface{}{
-				"id":         p.ID,
-				"precoAtual": precoSimulado,
-				"titulo":     tituloSimulado,
+			c := colly.NewCollector()
+			var precoEncontrado string
+			var tituloEncontrado string
+
+			// Lógica para Mercado Livre (exemplo de seletores comuns)
+			c.OnHTML("h1.ui-pdp-title", func(e *colly.HTMLElement) {
+				tituloEncontrado = strings.TrimSpace(e.Text)
+			})
+
+			c.OnHTML("span.andes-money-amount__fraction", func(e *colly.HTMLElement) {
+				if precoEncontrado == "" { // Pega o primeiro preço que aparecer
+					precoEncontrado = "R$ " + e.Text
+				}
+			})
+
+			c.Visit(p.URL)
+
+			// 2. Se achou algo, manda pro Node
+			if precoEncontrado != "" {
+				dados := map[string]interface{}{
+					"id":         p.ID,
+					"precoAtual": precoEncontrado,
+					"titulo":     tituloEncontrado,
+				}
+				jsonDados, _ := json.Marshal(dados)
+				http.Post("http://localhost:3000/atualizar-preco", "application/json", bytes.NewBuffer(jsonDados))
+				fmt.Printf("✅ [GO] Atualizado: %s -> %s\n", tituloEncontrado, precoEncontrado)
 			}
-			
-			corpoJSON, _ := json.Marshal(atualizacao)
-			http.Post("http://localhost:3000/atualizar-preco", "application/json", bytes.NewBuffer(corpoJSON))
-			
-			fmt.Printf("✅ Atualizado: %s custa %s\n", tituloSimulado, precoSimulado)
 		}
 
-		
-		time.Sleep(10 * time.Second)
+		fmt.Println("😴 [GO] Aguardando 30 segundos para a próxima rodada...")
+		time.Sleep(30 * time.Second)
 	}
 }
