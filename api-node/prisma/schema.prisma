@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:Moa@123@localhost:5432/gopherscraper?schema=public"
+  url      = "postgresql://postgres:Moa@123@gopher-db:5432/gopherscraper?schema=public"
 }
 
 model Produto {

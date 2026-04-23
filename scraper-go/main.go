@@ -21,10 +21,19 @@ func main() {
 
 	for {
 		// 1. Pede a lista para o Node
-		resp, _ := http.Get("http://localhost:3000/produtos")
+		resp, err := http.Get("http://gopher-api:3000/produtos")
+		if err != nil {
+			fmt.Printf("⚠️ [GO] Erro ao buscar produtos: %v. Tentando novamente...\n", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
 		var produtos []Produto
-		json.NewDecoder(resp.Body).Decode(&produtos)
+		err = json.NewDecoder(resp.Body).Decode(&produtos)
 		resp.Body.Close()
+		if err != nil {
+			fmt.Printf("⚠️ [GO] Erro ao decodificar JSON: %v\n", err)
+			continue
+		}
 
 		for _, p := range produtos {
 			fmt.Printf("🔍 [GO] Acessando site: %s\n", p.URL)
@@ -54,7 +63,7 @@ func main() {
 					"titulo":     tituloEncontrado,
 				}
 				jsonDados, _ := json.Marshal(dados)
-				http.Post("http://localhost:3000/atualizar-preco", "application/json", bytes.NewBuffer(jsonDados))
+				http.Post("http://gopher-api:3000/atualizar-preco", "application/json", bytes.NewBuffer(jsonDados))
 				fmt.Printf("✅ [GO] Atualizado: %s -> %s\n", tituloEncontrado, precoEncontrado)
 			}
 		}
