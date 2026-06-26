@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  gopher-frontend:
+    build: ./frontend-react
+    container_name: gopher_front
+    ports:
+      - "3002:5173" # Usando a 3002 para não conflitar com os outros projetos
+    volumes:
+      - ./frontend-react:/app
+      - /app/node_modules
+    restart: always
+
+  gopher-api:
+    build: ./api-node
+    container_name: gopher_api
+    ports:
+      - "5000:3000"
+    volumes:
+      - ./api-node:/app
+      - /app/node_modules
+    depends_on:
+      - gopher-db
+    restart: always
+
+  gopher-db:
+    image: postgres:15-alpine
+    container_name: gopher_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Moa@123
+      POSTGRES_DB: gopherscraper
+    ports:
+      - "5432:5432"
+    restart: always
+
+  gopher-scraper:
+    build: ./scraper-go
+    container_name: gopher_scraper
+    depends_on:
+      - gopher-api
+    # volumes:
+    #   - ./scraper-go:/app
+    restart: always
